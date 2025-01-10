@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay a Tax 2025</title> <!-- Title for browser tab -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .form-container {
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background-color: #008CBA;
+            color: white;
+        }
+        .update-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .download-buttons {
+            margin-top: 20px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Visible title on the page -->
+<h1>Pay a Tax 2025</h1>
+
+<div class="form-container">
+    <label for="phoneNumber">Phone Number:</label>
+    <input type="text" id="phoneNumber" placeholder="Enter phone number"><br><br>
+    <label for="amount">Amount:</label>
+    <input type="number" id="amount" placeholder="Enter amount"><br><br>
+    <label for="taxPercentage">Tax Percentage:</label>
+    <input type="number" id="taxPercentage" placeholder="Enter tax percentage"><br><br>
+    <button onclick="addData()">Add Data</button>
+</div>
+
+<table id="data-table">
+    <thead>
+        <tr>
+            <th>Phone Number</th>
+            <th>Amount</th>
+            <th>Tax Percentage</th>
+            <th>Tax Amount</th>
+            <th>Total Amount</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<!-- Download buttons -->
+<div class="download-buttons">
+    <button onclick="downloadExcel()">Download as Excel</button>
+    <button onclick="downloadPDF()">Download as PDF</button>
+</div>
+
+<!-- External libraries for Excel and PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+    let currentEditRow = null; // Tracks the row being edited
+
+    function addData() {
+        if (currentEditRow) {
+            alert('Finish editing the current row before adding new data.');
+            return;
+        }
+
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const amount = parseFloat(document.getElementById('amount').value.trim());
+        const taxPercentage = parseFloat(document.getElementById('taxPercentage').value.trim());
+
+        if (!phoneNumber || isNaN(amount) || isNaN(taxPercentage)) {
+            alert('Please fill in all fields with valid values.');
+            return;
+        }
+
+        const taxAmount = (amount * taxPercentage) / 100;
+        const totalAmount = amount + taxAmount;
+
+        const tableBody = document.querySelector('#data-table tbody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td>${phoneNumber}</td>
+            <td>${amount.toFixed(2)}</td>
+            <td>${taxPercentage}%</td>
+            <td>${taxAmount.toFixed(2)}</td>
+            <td>${totalAmount.toFixed(2)}</td>
+            <td>
+                <button class="edit-btn" onclick="editRow(this)">Edit</button>
+                <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
+            </td>
+        `;
+
+        tableBody.appendChild(newRow);
+        clearForm();
+    }
+
+    function editRow(button) {
+        if (currentEditRow) {
+            alert('Finish editing the current row before editing another.');
+            return;
+        }
+
+        currentEditRow = button.parentElement.parentElement;
+
+        const cells = currentEditRow.querySelectorAll('td');
+        document.getElementById('phoneNumber').value = cells[0].textContent;
+        document.getElementById('amount').value = parseFloat(cells[1].textContent);
+        document.getElementById('taxPercentage').value = parseFloat(cells[2].textContent);
+
+        const actionCell = currentEditRow.querySelector('td:last-child');
+        actionCell.innerHTML = `
+            <button class="update-btn" onclick="updateRow()">Update</button>
+            <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
+        `;
+    }
+
+    function updateRow() {
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const amount = parseFloat(document.getElementById('amount').value.trim());
+        const taxPercentage = parseFloat(document.getElementById('taxPercentage').value.trim());
+
+        if (!phoneNumber || isNaN(amount) || isNaN(taxPercentage)) {
+            alert('Please fill in all fields with valid values.');
+            return;
+        }
+
+        const taxAmount = (amount * taxPercentage) / 100;
+        const totalAmount = amount + taxAmount;
+
+        const cells = currentEditRow.querySelectorAll('td');
+        cells[0].textContent = phoneNumber;
+        cells[1].textContent = amount.toFixed(2);
+        cells[2].textContent = `${taxPercentage}%`;
+        cells[3].textContent = taxAmount.toFixed(2);
+        cells[4].textContent = totalAmount.toFixed(2);
+
+        const actionCell = currentEditRow.querySelector('td:last-child');
+        actionCell.innerHTML = `
+            <button class="edit-btn" onclick="editRow(this)">Edit</button>
+            <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
+        `;
+
+        currentEditRow = null;
+        clearForm();
+    }
+
+    function deleteRow(button) {
+        if (currentEditRow === button.parentElement.parentElement) {
+            currentEditRow = null; // Reset current edit row if deleted
+        }
+        button.parentElement.parentElement.remove();
+        clearForm();
+    }
+
+    function clearForm() {
+        document.getElementById('phoneNumber').value = '';
+        document.getElementById('amount').value = '';
+        document.getElementById('taxPercentage').value = '';
+    }
+
+    // Download as Excel
+    function downloadExcel() {
+        const ws = XLSX.utils.table_to_sheet(document.getElementById('data-table'));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Tax Calculation");
+        XLSX.writeFile(wb, "tax_calculation.xlsx");
+    }
+
+    // Download as PDF
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const table = document.getElementById('data-table');
+        const rows = table.querySelectorAll('tr');
+        let yOffset = 10;
+
+        rows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (index === 0) {
+                // Header row
+                cells.forEach(cell => {
+                    doc.text(cell.innerText, 10 + (index * 40), yOffset);
+                });
+            } else {
+                // Data rows
+                let cellOffset = 10;
+                cells.forEach(cell => {
+                    doc.text(cell.innerText, cellOffset, yOffset);
+                    cellOffset += 40;
+                });
+            }
+            yOffset += 10;
+        });
+
+        doc.save("tax_calculation.pdf");
+    }
+</script>
+
+<!-- Footer with copyright -->
+<footer>
+    <p>Copyright © 2010-2025 MoMo_Plus Hem Sopheak. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
